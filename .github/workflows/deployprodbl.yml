@@ -14,11 +14,14 @@ jobs:
       - name: 📥 Checkout Code
         uses: actions/checkout@v3
 
-      - name: ☁️ Set up Google Cloud CLI
+      - name: 🔐 Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: ⚙️ Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
         with:
-          version: 'latest'
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
           project_id: nameurcloud
 
       - name: 🔐 Authenticate Docker with Artifact Registry
