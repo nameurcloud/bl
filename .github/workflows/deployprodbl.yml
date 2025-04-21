@@ -1,0 +1,42 @@
+# .github/workflows/deploy-cloudrun.yml
+name: Deploy Production Backend
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v3
+
+      - name: ☁️ Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          version: 'latest'
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: nameurcloud
+
+      - name: 🔐 Authenticate Docker with Artifact Registry
+        run: |
+          gcloud auth configure-docker asia-east1-docker.pkg.dev
+
+      - name: 🛠️ Build and Push Docker Image
+        run: |
+          IMAGE=asia-east1-docker.pkg.dev/nameurcloud/production/nameurcloudb:$GITHUB_SHA
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+      - name: 🚀 Deploy to Cloud Run
+        run: |
+          IMAGE=asia-east1-docker.pkg.dev/nameurcloud/production/nameurcloudb:$GITHUB_SHA
+          gcloud run deploy backend \
+            --image=$IMAGE \
+            --platform=managed \
+            --region=asia-east1 \
+            --allow-unauthenticated \
+            --port=8080
