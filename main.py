@@ -7,6 +7,8 @@ app = FastAPI()
 origins = [
     "http://localhost:5173",  # your Vite dev server
     "http://127.0.0.1:5173",
+    "http://www.nameurcloud.com",
+    "https://www.nameurcloud.com"
     # Add your production frontend domain here later
 ]
 # CORS setup
