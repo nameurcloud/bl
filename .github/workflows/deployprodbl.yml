@@ -42,7 +42,6 @@ jobs:
             --image=$IMAGE \
             --platform=managed \
             --region=asia-east1 \
-            --allow-unauthenticated \
             --port=8080 \
             --set-env-vars "JWT_SECRET=${{ secrets.JWT_SECRET }},MONGO_URI=${{ secrets.MONGO_URI }}"
         env:
