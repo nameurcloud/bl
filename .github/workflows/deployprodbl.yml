@@ -7,10 +7,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  env:
-  JWT_SECRET: ${{ secrets.JWT_SECRET }}
-  MONGO_URI: ${{ secrets.MONGO_URI }}
-
   deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
@@ -49,3 +45,6 @@ jobs:
             --allow-unauthenticated \
             --port=8080 \
             --set-env-vars "JWT_SECRET=${{ secrets.JWT_SECRET }},MONGO_URI=${{ secrets.MONGO_URI }}"
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
