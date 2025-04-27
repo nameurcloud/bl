@@ -10,7 +10,8 @@ origins = [
     "http://localhost:8080",
     "http://localhost:8000",
     "http://www.nameurcloud.com",
-    "https://www.nameurcloud.com"
+    "https://www.nameurcloud.com",
+    "*"
     # Add your production frontend domain here later
 ]
 # CORS setup
