@@ -23,9 +23,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-@app.options("/api/{any:path}")
-async def handle_options(any: str):
-    return {"message": "CORS preflight allowed"}
+
 
 
 app.include_router(router) 
