@@ -11,7 +11,8 @@ origins = [
     "http://localhost:8000",
     "http://www.nameurcloud.com",
     "https://www.nameurcloud.com",
-    "*"
+    "http://api.nameurcloud.com",
+    "https://api.nameurcloud.com"
     # Add your production frontend domain here later
 ]
 # CORS setup
@@ -22,6 +23,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+@app.options("/api/{any:path}")
+async def handle_options(any: str):
+    return {"message": "CORS preflight allowed"}
 
 
 app.include_router(router) 
