@@ -6,7 +6,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from config import MONGO_URI
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="")
 client = MongoClient(MONGO_URI)
 db = client["authdb"]
 users = db["users"]
