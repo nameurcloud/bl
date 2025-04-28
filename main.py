@@ -8,11 +8,13 @@ origins = [
     "http://localhost:5173",  # your Vite dev server
     "http://127.0.0.1:5173",
     "http://localhost:8080",
-    "http://localhost:8000",
+    "https://localhost:8000",
     "http://www.nameurcloud.com",
     "https://www.nameurcloud.com",
     "http://api.nameurcloud.com",
-    "https://api.nameurcloud.com"
+    "https://api.nameurcloud.com",
+    "https://frontend-442566754193.asia-east1.run.app",
+    "http://frontend-442566754193.asia-east1.run.app"
     # Add your production frontend domain here later
 ]
 # CORS setup
