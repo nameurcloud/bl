@@ -12,9 +12,16 @@ db = client["authdb"]
 users = db["users"]
 security = HTTPBearer()
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
-    return decode_token(token)
+async def get_current_user(request: Request):
+    try:
+        body = await request.json()
+        token = body.get('token')
+        if not token:
+            raise HTTPException(status_code=401, detail="Token missing")
+        # decode and return user id (or whatever decode_token returns)
+        return decode_token(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 @router.post("/register")
 def register(user: UserIn):
@@ -32,8 +39,8 @@ def login(user: UserLogIn):
     token = create_token(str(found["_id"]))
     return {"token": token, "user": {"id": str(found["_id"]), "email": found["email"]}}
 
-@router.get("/dashboard")
-def dashboard(current_user: str = Depends(get_current_user)):
+@router.post("/dashboard")
+async def dashboard(current_user: str = Depends(get_current_user)):
     user_data = users.find_one({"_id": ObjectId(current_user)})
 
     if not user_data:
