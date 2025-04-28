@@ -26,6 +26,7 @@ def register(user: UserIn):
 
 @router.post("/login")
 def login(user: UserLogIn):
+    print("Login route")
     found = users.find_one({"email": user.email})
     if not found or not verify_password(user.password, found["password"]):
         raise HTTPException(status_code=400, detail="Invalid credentials")
