@@ -7,6 +7,7 @@ class UserIn(BaseModel):
     lname: str
     mobile: str
     dob: str
+    plan: str
 
 class UserLogIn(BaseModel):
     email: EmailStr

@@ -1,7 +1,7 @@
 from passlib.context import CryptContext
 from jose import jwt, JWTError, ExpiredSignatureError
 from fastapi import HTTPException
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from config import JWT_SECRET  # Make sure this is defined in config.py
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -18,7 +18,7 @@ def verify_password(plain: str, hashed: str):
 def create_token(user_id: str):
     payload = {
         "sub": user_id,  # Standard claim for user ID
-        "exp": datetime.utcnow() + timedelta(hours=5)
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=30)
     }
     return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
