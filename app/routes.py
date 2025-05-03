@@ -8,15 +8,10 @@ from app.db import users
 from app.userService import get_user_profile
 
 router = APIRouter(prefix="")
-client = MongoClient(MONGO_URI)
-db = client["authdb"]
-users = db["users"]
-security = HTTPBearer()
 
 async def get_current_user(request: Request):
     try:
-        body = await request.json()
-        token = body.get('token')
+        token = request.headers.get('X-App-Auth')
         if not token:
             raise HTTPException(status_code=401, detail="Token missing")
         # decode and return user id (or whatever decode_token returns)
@@ -34,13 +29,15 @@ def register(user: UserIn):
 
 @router.post("/login")
 def login(user: UserLogIn):
-    print('Login backend')
-    print(user)
     found = users.find_one({"email": user.email})
     if not found or not verify_password(user.password, found["password"]):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     token = create_token(str(found["_id"]))
     return {"token": token, "user": {"id": str(found["_id"]), "email": found["email"]}}
+
+@router.get("/auth-check") #Checks authencity of Token
+def authCheck(user_id=Depends(get_current_user)):
+    return {"status": "ok", "user_id": user_id}
 
 insider_router = APIRouter(
     prefix="/insider",
@@ -48,34 +45,40 @@ insider_router = APIRouter(
 )
 
 @insider_router.get("/api")
-def dashboard_home():
+def api():
     return {"message": "Welcome"}
 
 @insider_router.get("/config")
-def dashboard_stats():
+def config():
     return {"message": "Welcome"}
 
 @insider_router.get("/dashboard")
-def dashboard_settings():
+def dashboard():
     return {"message": "Welcome"}
 
 @insider_router.get("/faq")
-def dashboard_home():
+def faq():
     return {"message": "Welcome"}
 
 @insider_router.get("/names")
-def dashboard_stats():
+def names():
     return {"message": "Welcome"}
 
 @insider_router.get("/payment")
-def dashboard_settings():
+def payment():
     return {"settings": "Welcome"}
 
 @insider_router.get("/recom")
-def dashboard_home():
+def recom():
     return {"message": "Welcome"}
 
 @insider_router.get("/support")
-def dashboard_stats():
+def support():
     return {"message": "Welcome"}
+
+@router.get("/profile")
+def profile(user_id=Depends(get_current_user)):
+    userProfile = get_user_profile(user_id)
+    return {"profile": userProfile}
+
 
