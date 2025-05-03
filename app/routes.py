@@ -12,10 +12,10 @@ db = client["authdb"]
 users = db["users"]
 security = HTTPBearer()
 
+
 async def get_current_user(request: Request):
     try:
-        body = await request.json()
-        token = body.get('token')
+        token = request.headers.get('X-App-Auth')
         if not token:
             raise HTTPException(status_code=401, detail="Token missing")
         # decode and return user id (or whatever decode_token returns)
@@ -33,48 +33,47 @@ def register(user: UserIn):
 
 @router.post("/login")
 def login(user: UserLogIn):
-    print('Login backend')
-    print(user)
     found = users.find_one({"email": user.email})
     if not found or not verify_password(user.password, found["password"]):
         raise HTTPException(status_code=400, detail="Invalid credentials")
-    token = create_token(str(found["_id"]))
-    return {"token": token, "user": {"id": str(found["_id"]), "email": found["email"]}}
+    token = create_token(str(found["email"]))
+    return {"token": token}
 
 insider_router = APIRouter(
     prefix="/insider",
     dependencies=[Depends(get_current_user)] 
 )
 
+
 @insider_router.get("/api")
-def dashboard_home():
-    return {"message": "Welcome"}
+def insider_api():
+    return {"message": "api"}
 
 @insider_router.get("/config")
-def dashboard_stats():
-    return {"message": "Welcome"}
+def insider_config():
+    return {"message": "config"}
 
 @insider_router.get("/dashboard")
-def dashboard_settings():
-    return {"message": "Welcome"}
+def insider_dashboard():
+    return {"message": "dashboard"}
 
 @insider_router.get("/faq")
-def dashboard_home():
-    return {"message": "Welcome"}
+def insider_faq():
+    return {"message": "faq"}
 
 @insider_router.get("/names")
-def dashboard_stats():
-    return {"message": "Welcome"}
+def insider_names():
+    return {"message": "names"}
 
 @insider_router.get("/payment")
-def dashboard_settings():
-    return {"settings": "Welcome"}
+def insider_payment():
+    return {"settings": "payment"}
 
 @insider_router.get("/recom")
-def dashboard_home():
-    return {"message": "Welcome"}
+def insider_recom():
+    return {"message": "recom"}
 
 @insider_router.get("/support")
-def dashboard_stats():
-    return {"message": "Welcome"}
+def insider_support():
+    return {"message": "support"}
 
