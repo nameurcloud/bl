@@ -1,16 +1,13 @@
 from fastapi import APIRouter, HTTPException , Depends, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import  HTTPAuthorizationCredentials
 from app.models import UserIn, UserLogIn
 from app.auth import hash_password, verify_password, create_token , decode_token
-from pymongo import MongoClient
 from bson import ObjectId
-from config import MONGO_URI
+from app.db import users
+
+from app.userService import get_user_profile
 
 router = APIRouter(prefix="")
-client = MongoClient(MONGO_URI)
-db = client["authdb"]
-users = db["users"]
-security = HTTPBearer()
 
 
 async def get_current_user(request: Request):
@@ -67,7 +64,7 @@ def insider_names():
 
 @insider_router.get("/payment")
 def insider_payment():
-    return {"settings": "payment"}
+    return {"message": "payment"}
 
 @insider_router.get("/recom")
 def insider_recom():
@@ -76,4 +73,11 @@ def insider_recom():
 @insider_router.get("/support")
 def insider_support():
     return {"message": "support"}
+
+@insider_router.get("/profile")
+def insider_profile(email: str = Depends(get_current_user)):
+    if not email:
+        raise HTTPException(status_code=404, detail="User not found")
+    user_profile = get_user_profile(email)
+    return {"profile": user_profile}
 
