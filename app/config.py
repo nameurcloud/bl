@@ -31,5 +31,6 @@ def set_user_pattern_config(user_id: str, updated_config):
 
     # Store the entire nested config object in one document
     insert_result = pattern_collection.insert_one(updated_config.dict())
+    print(insert_result)
 
     return str(insert_result.inserted_id)
