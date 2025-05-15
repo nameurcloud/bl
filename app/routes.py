@@ -1,12 +1,13 @@
 from typing import Dict, List
 from fastapi import APIRouter, Body, HTTPException , Depends, Request
 from fastapi.security import  HTTPAuthorizationCredentials
-from app.models import ConfigBody, UserIn, UserLogIn
+from app.models import ConfigBody, GeneratedName, UserIn, UserLogIn
 from app.auth import hash_password, verify_password, create_token , decode_token
 from bson import ObjectId
 from app.db import users , client, pattern
 from app.config import get_user_pattern_config , set_user_pattern_config
 from app.userService import get_user_plan, get_user_profile
+from app.names import get_name, set_name
 
 router = APIRouter(prefix="")
 
@@ -86,6 +87,7 @@ def config(updated_config: ConfigBody,user_id=Depends(get_current_user)):
     result = set_user_pattern_config(user_id,updated_config)
     return {"result": result}
 
+
 @insider_router.get("/dashboard")
 def dashboard():
     return {"message": "Welcome"}
@@ -94,9 +96,20 @@ def dashboard():
 def faq():
     return {"message": "Welcome"}
 
-@insider_router.get("/names")
-def names():
-    return {"message": "Welcome"}
+@router.get("/names")
+def names(user_id=Depends(get_current_user)):
+    pattern_config = get_user_pattern_config(user_id)
+    return {"pattern_config": pattern_config}
+
+@router.post("/name")
+def name(name : GeneratedName,user_id=Depends(get_current_user)):
+    ret_status = set_name(user_id,name)
+    return {"status": ret_status}
+
+@router.get("/name")
+def name(user_id=Depends(get_current_user)):
+    allnames = get_name(user_id)
+    return {"result": allnames}
 
 @insider_router.get("/payment")
 def payment():

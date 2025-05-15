@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Dict
+from datetime import datetime
 
 class UserIn(BaseModel):
     email: EmailStr
@@ -40,3 +41,10 @@ class ConfigBody(BaseModel):
     AWS: CloudConfig
     GCP: CloudConfig
     Azure: CloudConfig
+
+class GeneratedName(BaseModel):
+    name : str
+    datetime : datetime
+    user : str
+    mode : str
+    status : str
