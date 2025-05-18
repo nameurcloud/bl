@@ -1,6 +1,5 @@
-from typing import Dict, List
-from fastapi import APIRouter, Body, HTTPException , Depends, Request
-from fastapi.security import  HTTPAuthorizationCredentials
+from fastapi import Query
+from fastapi import APIRouter, HTTPException , Depends, Request
 from app.models import ConfigBody, GeneratedName, UserIn, UserLogIn, apiKey
 from app.auth import hash_password, verify_password, create_token , decode_token
 from bson import ObjectId
@@ -9,6 +8,7 @@ from app.config import get_user_pattern_config , set_user_pattern_config
 from app.userService import get_user_plan, get_user_profile
 from app.names import get_name, set_name
 from app.api import setApiKey , getApiKeys
+from app.dashboard import getCSPCount, getCSPResRegCount, getNameCount , getModeCount
 
 router = APIRouter(prefix="")
 
@@ -84,7 +84,7 @@ def apkey(user_id=Depends(get_current_user)):
     keys = getApiKeys(user_id)
     return {"keys": keys}
 
-from fastapi import Query
+
 
 @router.delete("/apkey")
 def delete_api_key(partial_key: str = Query(...), email: str = Query(...), user_id=Depends(get_current_user)):
@@ -115,9 +115,19 @@ def config(updated_config: ConfigBody,user_id=Depends(get_current_user)):
     return {"result": result}
 
 
-@insider_router.get("/dashboard")
-def dashboard():
-    return {"message": "Welcome"}
+@router.get("/dashboard")
+def dashboard(user_id=Depends(get_current_user)):
+    nameCount = getNameCount(user_id)
+    modecount = getModeCount(user_id)
+    cspcount = getCSPCount(user_id)
+    cspresregCount = getCSPResRegCount(user_id)
+    retunObj = {
+        "generatedNameCount" : nameCount,
+        "modeCount" : modecount,
+        "cspCount" : cspcount,
+        "cspResRegCount" : cspresregCount
+    }
+    return retunObj
 
 @insider_router.get("/faq")
 def faq():
