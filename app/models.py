@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Dict
 from datetime import datetime
+from uuid import UUID
 
 class UserIn(BaseModel):
     email: EmailStr
@@ -33,6 +34,7 @@ class EnvironmentConfig(BaseModel):
     code: str
 
 class CloudConfig(BaseModel):
+    code: str
     regions: List[RegionConfig]
     resources: List[ResourceConfig]
     environments: List[EnvironmentConfig]
@@ -48,3 +50,11 @@ class GeneratedName(BaseModel):
     user : str
     mode : str
     status : str
+
+class apiKey(BaseModel):
+    id : UUID
+    partialKey : str
+    key : str
+    email : str
+    expiry : datetime
+    permissions : list[str]

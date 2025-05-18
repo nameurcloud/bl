@@ -1,13 +1,14 @@
 from typing import Dict, List
 from fastapi import APIRouter, Body, HTTPException , Depends, Request
 from fastapi.security import  HTTPAuthorizationCredentials
-from app.models import ConfigBody, GeneratedName, UserIn, UserLogIn
+from app.models import ConfigBody, GeneratedName, UserIn, UserLogIn, apiKey
 from app.auth import hash_password, verify_password, create_token , decode_token
 from bson import ObjectId
 from app.db import users , client, pattern
 from app.config import get_user_pattern_config , set_user_pattern_config
 from app.userService import get_user_plan, get_user_profile
 from app.names import get_name, set_name
+from app.api import setApiKey , getApiKeys
 
 router = APIRouter(prefix="")
 
@@ -73,9 +74,35 @@ insider_router = APIRouter(
     dependencies=[Depends(get_current_user)] 
 )
 
-@insider_router.get("/api")
-def api():
-    return {"message": "Welcome"}
+@router.post("/apkey")
+def apkey(key : apiKey,user_id=Depends(get_current_user)):
+    status = setApiKey(user_id,key)
+    return {"status": status}
+
+@router.get("/apkey")
+def apkey(user_id=Depends(get_current_user)):
+    keys = getApiKeys(user_id)
+    return {"keys": keys}
+
+from fastapi import Query
+
+@router.delete("/apkey")
+def delete_api_key(partial_key: str = Query(...), email: str = Query(...), user_id=Depends(get_current_user)):
+    user_org = users.find_one({"_id": ObjectId(user_id)}, {"org": 1})
+    if not user_org or "org" not in user_org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    configdb = client[user_org["org"]]
+    apiTable = configdb["api"]
+
+    result = apiTable.delete_one({"partialKey": partial_key, "email": email})
+
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="API key not found")
+
+    return {"status": "Deleted"}
+
+
 
 @router.get("/config")
 def config(user_id=Depends(get_current_user)):
