@@ -10,15 +10,12 @@ from app.names import get_name, get_name_api, set_name, set_name_api
 from app.api import check_org, check_orgapi_map, check_permission, get_email_api, setApiKey , getApiKeys, validate_key
 from app.dashboard import getCSPCount, getCSPResRegCount, getNameCount , getModeCount
 from app.payment import set_payment, set_payment_order
-from config import JWT_SECRET
+from config import JWT_SECRET, RAZORPAY_SECRET, RAZORPAY_KEY_ID
 import jwt
 from datetime import datetime
 import razorpay
 import hmac
 import hashlib
-
-RAZORPAY_KEY_ID = "rzp_test_0XHm0CZsK9Odpf"
-RAZORPAY_SECRET = "Zn6ppQ1H92riBDlpBFVri0Pa"
 
 razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_SECRET))
 
