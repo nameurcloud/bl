@@ -8,5 +8,3 @@ pydantic[email]
 bcrypt==4.0.1
 PyJWT
 razorpay
-hmac
-hashlib
