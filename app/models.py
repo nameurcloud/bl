@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import List, Dict
+from typing import List, Optional
 from datetime import datetime
 from uuid import UUID
 
@@ -56,5 +56,24 @@ class apiKey(BaseModel):
     partialKey : str
     key : str
     email : str
-    expiry : datetime
+    expiry : Optional[str]
     permissions : list[str]
+
+class APIKeyRequest(BaseModel):
+    email: str
+    expiry: Optional[str]
+    permissions: list[str]
+
+class ApiPayload(BaseModel):
+    path: str
+    key: str
+    method : str
+    body : Optional[dict] = None
+
+class PaymentRequest(BaseModel):
+    amount: int  # in paise (e.g., ₹100 = 10000 paise)
+
+class PaymentVerificationRequest(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str

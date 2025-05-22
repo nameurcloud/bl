@@ -1,14 +1,26 @@
 from fastapi import Query
 from fastapi import APIRouter, HTTPException , Depends, Request
-from app.models import ConfigBody, GeneratedName, UserIn, UserLogIn, apiKey
+from app.models import ApiPayload,ConfigBody, GeneratedName, PaymentRequest, PaymentVerificationRequest, UserIn, UserLogIn, apiKey , APIKeyRequest
 from app.auth import hash_password, verify_password, create_token , decode_token
 from bson import ObjectId
 from app.db import users , client, pattern
 from app.config import get_user_pattern_config , set_user_pattern_config
 from app.userService import get_user_plan, get_user_profile
-from app.names import get_name, set_name
-from app.api import setApiKey , getApiKeys
+from app.names import get_name, get_name_api, set_name, set_name_api
+from app.api import check_org, check_orgapi_map, check_permission, get_email_api, setApiKey , getApiKeys, validate_key
 from app.dashboard import getCSPCount, getCSPResRegCount, getNameCount , getModeCount
+from app.payment import set_payment, set_payment_order
+from config import JWT_SECRET
+import jwt
+from datetime import datetime
+import razorpay
+import hmac
+import hashlib
+
+RAZORPAY_KEY_ID = "rzp_test_0XHm0CZsK9Odpf"
+RAZORPAY_SECRET = "Zn6ppQ1H92riBDlpBFVri0Pa"
+
+razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_SECRET))
 
 router = APIRouter(prefix="")
 
@@ -84,6 +96,23 @@ def apkey(user_id=Depends(get_current_user)):
     keys = getApiKeys(user_id)
     return {"keys": keys}
 
+@router.post("/genapkey")
+def genapikey(data: APIKeyRequest):
+    print("Received request:", data)
+    try:
+        expiry_dt = datetime.fromisoformat(data.expiry.replace("Z", "+00:00"))
+    except Exception:
+        return {"error": "Invalid expiry datetime format"}
+
+    payload = {
+        "email": data.email,
+        "expiry": data.expiry,
+        "permissions": data.permissions,
+    }
+
+    token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
+    return {"apiKey": token}
 
 
 @router.delete("/apkey")
@@ -169,6 +198,103 @@ def profile(user_id=Depends(get_current_user)):
 def profile(user_id=Depends(get_current_user)):
     userPlan = get_user_plan(user_id)
     return {"userPlan": userPlan}
+
+@router.post("/create-razorpay-order")
+async def create_razorpay_order(payment: PaymentRequest,user_id=Depends(get_current_user)):
+    
+    try:
+        order = razorpay_client.order.create({
+            "amount": payment.amount,
+            "currency": "INR",
+            "receipt": f"receipt_{int(__import__('time').time())}",
+            "payment_capture": 1,
+        })
+        set_payment_order(user_id,order)
+        return order
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create Razorpay order: {str(e)}")
+
+@router.post("/verify-razorpay-payment")
+async def verify_payment(payload: PaymentVerificationRequest,user_id=Depends(get_current_user)):
+    try:
+        generated_signature = hmac.new(
+            RAZORPAY_SECRET.encode(),
+            f"{payload.razorpay_order_id}|{payload.razorpay_payment_id}".encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+        if generated_signature != payload.razorpay_signature:
+            raise HTTPException(status_code=400, detail="Invalid signature")
+
+        # Optional: fetch payment status from Razorpay
+        payment_info = razorpay_client.payment.fetch(payload.razorpay_payment_id)
+        set_payment(user_id,payment_info)
+        return {
+            "status": payment_info["status"],  # can be 'captured', 'failed', etc.
+            "method": payment_info["method"],
+            "email": payment_info.get("email"),
+            "amount": payment_info["amount"],
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("/apy/view")
+async def apy_view(payloadIn: ApiPayload):
+    full_path = payloadIn.path
+    api_key = payloadIn.key
+    payload = validate_key(api_key)
+    org = full_path.split("/")[1]
+
+    if not api_key or not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired API key")
+
+    if not check_org(org):
+        raise HTTPException(status_code=400, detail="Invalid Organization")
+    
+    if not check_orgapi_map(org,api_key):
+        raise HTTPException(status_code=403, detail="API Key not Mapped with Organization")
+
+    if not check_permission(payload, full_path, payloadIn.method):
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    return {
+        "action": full_path.split("/")[2],
+        "output" : get_name_api(org)
+        }
+
+@router.post("/apy/generate")
+async def apy_generate(payloadIn: ApiPayload):
+    body = payloadIn.body
+    full_path = payloadIn.path
+    api_key = payloadIn.key
+    payload = validate_key(api_key)
+    org = full_path.split("/")[1]
+
+    if not api_key or not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired API key")
+
+    if not check_org(org):
+        raise HTTPException(status_code=400, detail="Invalid Organization")
+    
+    if not check_orgapi_map(org,api_key):
+        raise HTTPException(status_code=403, detail="API Key not Mapped with Organization")
+
+    if not check_permission(payload, full_path, payloadIn.method):
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    if not body or not isinstance(body, dict):
+        raise HTTPException(status_code=422, detail="Missing or invalid 'body' field")
+
+    pattern = body.get("pattern")
+    if not pattern or not isinstance(pattern, str) or pattern.strip() == "":
+        raise HTTPException(status_code=422, detail="'pattern' must be a non-empty string")
+ 
+    
+    return {
+        "action": full_path.split("/")[2],
+        "output" : set_name_api(org,pattern,get_email_api(api_key))
+        }
 
 
 

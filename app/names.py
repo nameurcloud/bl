@@ -1,3 +1,4 @@
+from datetime import datetime
 from app.db import client, users
 from bson import ObjectId
 from app.models import GeneratedName
@@ -54,3 +55,53 @@ def get_name(user_id: str):
 
     # Serialize ObjectId to string
     return [serialize_doc(doc) for doc in results]
+
+def get_name_api(org: str):
+    # Get the user's organization
+
+    if not org :
+        raise ValueError("Organization not found for user.")
+
+    # Use the user's org-specific database
+    configdb = client[org]
+    nametable = configdb["names"]
+
+    # Find all documents in the 'names' collection
+    results = list(nametable.find({}, {"name": 1, "_id": 0}))
+
+    # Serialize ObjectId to string
+    return results
+
+
+def set_name_api(org: str, pattern: str, email : str):
+    if not org:
+        raise ValueError("Organization not found for user.")
+
+    configdb = client[org]
+    nametable = configdb["names"]
+
+    # Count matching existing names
+    count_of_pattern = nametable.count_documents({
+        "name": {"$regex": f"^{pattern}"}
+    })
+
+    patternexist = count_of_pattern  # This handles both pattern exist check and suffix count
+    if patternexist == 0:
+       return f"First name with the pattern: {pattern} needs to be created from UI"
+
+    updated_name = f"{pattern}{count_of_pattern + 1:05d}"
+
+    name_dict = {
+        "name": updated_name,
+        "datetime": datetime.now(),
+        "user": email,
+        "mode": "API",
+        "status": "submitted"
+    }
+
+    insert_result = nametable.insert_one(name_dict)
+
+    if insert_result.acknowledged:
+        return updated_name
+    else:
+        return ""
