@@ -1,6 +1,5 @@
 from app.db import client, users
 from bson import ObjectId
-from app.models import apiKey
 
 
 def getNameCount(user_id: str):
