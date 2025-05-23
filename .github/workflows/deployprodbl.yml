@@ -1,4 +1,3 @@
-# .github/workflows/deploy-cloudrun.yml
 name: Deploy Production Backend
 
 on:
@@ -7,8 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Build & Deploy
+  # Stage 1: Build Docker Image
+  build:
+    name: 🛠️ Build Docker Image
     runs-on: ubuntu-latest
 
     steps:
@@ -26,14 +26,59 @@ jobs:
           project_id: nameurcloud
 
       - name: 🔐 Authenticate Docker with Artifact Registry
-        run: |
-          gcloud auth configure-docker asia-east1-docker.pkg.dev
+        run: gcloud auth configure-docker asia-east1-docker.pkg.dev
 
-      - name: 🛠️ Build and Push Docker Image
+      - name: 🛠️ Build Docker Image
+        run: |
+          IMAGE=asia-east1-docker.pkg.dev/nameurcloud/production/nameurcloudb:$GITHUB_SHA
+          docker build -t $IMAGE .
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+
+  # Stage 2: Push Docker Image
+  push:
+    name: 📦 Push Docker Image
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: 🔐 Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: ⚙️ Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: nameurcloud
+
+      - name: 🔐 Authenticate Docker with Artifact Registry
+        run: gcloud auth configure-docker asia-east1-docker.pkg.dev
+
+      - name: 📦 Push Docker Image to Artifact Registry
         run: |
           IMAGE=asia-east1-docker.pkg.dev/nameurcloud/production/nameurcloudb:$GITHUB_SHA
           docker build -t $IMAGE .
           docker push $IMAGE
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+
+  # Stage 3: Deploy to Cloud Run
+  deploy:
+    name: 🚀 Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: push
+
+    steps:
+      - name: 🔐 Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: ⚙️ Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: nameurcloud
 
       - name: 🚀 Deploy to Cloud Run
         run: |
@@ -45,5 +90,6 @@ jobs:
             --port=8080 \
             --set-env-vars "JWT_SECRET=${{ secrets.JWT_SECRET }},MONGO_URI=${{ secrets.MONGO_URI }}"
         env:
+          GITHUB_SHA: ${{ github.sha }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           MONGO_URI: ${{ secrets.MONGO_URI }}
