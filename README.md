@@ -6,6 +6,7 @@ This is the repo holding Back End code for nameurcloud
 ## Requirements
 - Python (v3.12.10 or higher)
 - Database installed locally
+- Pattern Table updated in the DB
 
 ## Running the Project Locally
 
@@ -17,7 +18,7 @@ Make sure database is properly installed locally before running the back end.
 3. Make sure your database is up and running (MongoDB).
 
 ### Step 2: Install Dependencies
-In the frontend directory, run the following command to install the required dependencies:
+In the backend directory, run the following command to install the required dependencies:
 
 ```bash
 pip install -r requirements.txt 
