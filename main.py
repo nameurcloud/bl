@@ -13,6 +13,10 @@ origins = [
     "https://www.nameurcloud.com",
     "http://be.nameurcloud.com",
     "https://be.nameurcloud.com",
+    "http://api.nameurcloud.com",
+    "https://api.nameurcloud.com",
+    "https://api-442566754193.asia-east1.run.app",
+    "http://api-442566754193.asia-east1.run.app",
     "https://frontend-442566754193.asia-east1.run.app",
     "http://frontend-442566754193.asia-east1.run.app"
     # Add your production frontend domain here later
