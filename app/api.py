@@ -31,6 +31,9 @@ def validate_key(api_key: str) -> dict | None:
 
 # app/auth.py
 def check_permission(payload: dict, path: str, method: str) -> bool:
+    print(payload)
+    print(path)
+    print(method)
     permissions = payload.get("permissions", [])
     # Strict method-to-permission mapping
     if method == "POST" and path.split("/")[2] == "delete":
